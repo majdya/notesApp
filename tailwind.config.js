@@ -6,18 +6,19 @@ module.exports = {
     extend: {
       colors: {
         surface: '#ffffff',
-        background: '#f5f5f5',
-        primary: '#007AFF',
-        danger: '#ff4444',
+        background: '#f2f2f7',
+        primary: '#00994E',
+        primaryLight: '#e8f5e9',
+        danger: '#ff3b30',
         text: {
-          primary: '#1a1a1a',
-          secondary: '#666666',
-          tertiary: '#999999',
+          primary: '#1c1c1e',
+          secondary: '#8e8e93',
+          tertiary: '#aeaeb2',
         },
-        border: '#e0e0e0',
+        border: '#d1d1d6',
       },
       borderRadius: {
-        card: '12px',
+        card: '10px',
         input: '8px',
         button: '10px',
         fab: '28px',

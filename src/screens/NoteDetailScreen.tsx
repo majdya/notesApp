@@ -15,7 +15,7 @@ import { RootStackParamList } from '../navigation/AppNavigator';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
 import { updateNote, deleteNote } from '../store/notesSlice';
 import FieldError from '../components/FieldError';
-import { validateNoteTitle, validateNoteContent } from '../utils/validations';
+import { validateNoteTitle } from '../utils/validations';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'NoteDetail'>;
 
@@ -124,7 +124,7 @@ function NoteDetailScreen({ route, navigation }: Props) {
           value={title}
           onChangeText={handleChangeTitle}
           placeholder="Note title"
-          placeholderTextColor="#999"
+          placeholderTextColor="#aeaeb2"
           editable={!isSaving}
         />
         <FieldError error={titleError} />
@@ -133,27 +133,31 @@ function NoteDetailScreen({ route, navigation }: Props) {
           value={content}
           onChangeText={handleChangeContent}
           placeholder="Note content"
-          placeholderTextColor="#999"
+          placeholderTextColor="#aeaeb2"
           multiline
           textAlignVertical="top"
           editable={!isSaving}
         />
-        <Text className="mt-4 mb-6 text-xs text-text-tertiary">
-          Created: {new Date(note.createdAt).toLocaleString()} • Updated:{' '}
-          {new Date(note.updatedAt).toLocaleString()}
-        </Text>
-        {note.latitude != null && note.longitude != null && (
-          <Text className="mb-6 text-xs text-text-tertiary">
-            Location: {note.latitude.toFixed(4)}, {note.longitude.toFixed(4)}
+        <View className="mb-6 flex-row flex-wrap gap-x-4 gap-y-1">
+          <Text className="text-xs text-text-tertiary">
+            Created {new Date(note.createdAt).toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' })}
           </Text>
-        )}
-        <View className="gap-3">
+          <Text className="text-xs text-text-tertiary">
+            Updated {new Date(note.updatedAt).toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' })}
+          </Text>
+          {note.latitude != null && note.longitude != null && (
+            <Text className="text-xs text-text-tertiary">
+              {note.latitude.toFixed(4)}, {note.longitude.toFixed(4)}
+            </Text>
+          )}
+        </View>
+        <View className="gap-2.5">
           <Pressable
             className={`rounded-button py-3.5 
               ${
                 dirty && !titleError && title.trim() && !isSaving
                   ? 'bg-primary'
-                  : 'bg-blue-200'
+                  : 'bg-primary/20'
               }`}
             onPress={handleSave}
             disabled={!dirty || !!titleError || !title.trim() || isSaving}
@@ -172,7 +176,7 @@ function NoteDetailScreen({ route, navigation }: Props) {
             )}
           </Pressable>
           <Pressable
-            className="rounded-button border border-danger py-3.5"
+            className="rounded-button border border-danger/30 py-3.5"
             onPress={handleDelete}
             disabled={isSaving}
           >

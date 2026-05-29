@@ -26,7 +26,7 @@ function App() {
       <PersistGate
         loading={
           <View className="flex-1 items-center justify-center bg-background">
-            <ActivityIndicator size="large" color="#007AFF" />
+            <ActivityIndicator size="large" color="#00994E" />
           </View>
         }
         persistor={persistor}
