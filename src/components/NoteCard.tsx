@@ -13,17 +13,29 @@ function NoteCard({ note, onPress, onLongPress }: NoteCardProps) {
       className="mx-4 my-1.5 rounded-card bg-surface p-4 shadow-sm"
       style={({ pressed }) => pressed && { opacity: 0.7 }}
       onPress={() => onPress(note)}
-      onLongPress={() => onLongPress?.(note)}>
+      onLongPress={() => onLongPress?.(note)}
+    >
       <View className="gap-1">
-        <Text className="text-lg font-semibold text-text-primary" numberOfLines={1}>
+        <Text
+          className="text-lg font-semibold text-text-primary"
+          numberOfLines={1}
+        >
           {note.title || 'Untitled'}
         </Text>
-        <Text className="text-sm leading-5 text-text-secondary" numberOfLines={2}>
+        <Text
+          className="text-sm leading-5 text-text-secondary"
+          numberOfLines={2}
+        >
           {note.content || 'No content'}
         </Text>
         <Text className="mt-1 text-xs text-text-tertiary">
           {new Date(note.updatedAt).toLocaleDateString()}
         </Text>
+        {note.latitude && note.longitude && (
+          <Text className="mt-1 text-xs text-text-tertiary">
+            📍 {note.latitude.toFixed(4)}, {note.longitude.toFixed(4)}
+          </Text>
+        )}
       </View>
     </Pressable>
   );

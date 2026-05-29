@@ -101,11 +101,14 @@ function NoteDetailScreen({ route, navigation }: Props) {
           multiline
           textAlignVertical="top"
         />
-        <Text className="mt-4 mb-6 text-xs text-text-tertiary">
-          Created: {new Date(note.createdAt).toLocaleString()} • Updated:{' '}
-          {new Date(note.updatedAt).toLocaleString()}
+        <Text className="my-2 text-sm text-text-tertiary">
+          Last Updated: {new Date(note.updatedAt).toLocaleString()}
         </Text>
-        <View className="gap-3">
+        <Text className="my-4 text-sm text-text-tertiary">
+          Created: {new Date(note.createdAt).toLocaleString()} 📍
+          {note?.latitude?.toFixed(4)}, {note?.longitude?.toFixed(4)}
+        </Text>
+        <View className="gap-5">
           <Pressable
             className={`rounded-button py-3.5 
               ${dirty && title.trim() ? 'bg-primary' : 'bg-blue-200'}`}

@@ -8,6 +8,7 @@ import {
   Text,
   TextInput,
   View,
+  ActivityIndicator,
 } from 'react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -15,6 +16,7 @@ import { useAppDispatch, useAppSelector } from '../store/hooks';
 import { addNote, deleteNote, Note } from '../store/notesSlice';
 import NoteCard from '../components/NoteCard';
 import { RootStackParamList } from '../navigation/AppNavigator';
+import { getCurrentLocation } from '../hooks/useLocation';
 
 type NotesListNavProp = NativeStackNavigationProp<
   RootStackParamList,
@@ -32,16 +34,20 @@ function NotesListScreen({ navigation }: Props) {
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
   const [showForm, setShowForm] = useState(false);
+  const [locating, setLocating] = useState(false);
 
-  const handleCreate = useCallback(() => {
+  const handleCreate = useCallback(async () => {
     if (!title.trim()) {
       Alert.alert('Empty note title', 'Title is required.');
       return;
     }
-    dispatch(addNote(title, content));
+    setLocating(true);
+    const location = await getCurrentLocation();
+    dispatch(addNote(title, content, location?.latitude, location?.longitude));
     setTitle('');
     setContent('');
     setShowForm(false);
+    setLocating(false);
   }, [title, content, dispatch]);
 
   const handleDelete = useCallback(
