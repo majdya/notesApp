@@ -18,6 +18,9 @@ import NoteCard from '../components/NoteCard';
 import { RootStackParamList } from '../navigation/AppNavigator';
 import { getCurrentLocation } from '../hooks/useLocation';
 
+import FieldError from '../components/FieldError';
+import { validateNoteTitle, validateNoteContent } from '../utils/validations';
+
 type NotesListNavProp = NativeStackNavigationProp<
   RootStackParamList,
   'NotesList'
@@ -34,21 +37,54 @@ function NotesListScreen({ navigation }: Props) {
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
   const [showForm, setShowForm] = useState(false);
-  const [locating, setLocating] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [locationFeedback, setLocationFeedback] = useState<string | null>(null);
+  const [titleError, setTitleError] = useState<string | null>(null);
+  const [contentError, setContentError] = useState<string | null>(null);
+
+  const handleTitleChange = useCallback((text: string) => {
+    setTitle(text);
+    setTitleError(validateNoteTitle(text));
+  }, []);
+
+  const handleContentChange = useCallback((text: string) => {
+    setContent(text);
+    setContentError(validateNoteContent(text));
+  }, []);
 
   const handleCreate = useCallback(async () => {
-    if (!title.trim()) {
-      Alert.alert('Empty note title', 'Title is required.');
-      return;
-    }
-    setLocating(true);
+    const titleErr = validateNoteTitle(title);
+    const contentErr = validateNoteContent(content);
+    setTitleError(titleErr);
+    setContentError(contentErr);
+    if (titleErr || contentErr) return;
+
+    setIsSubmitting(true);
+    setLocationFeedback(null);
+
     const location = await getCurrentLocation();
+    if (!location) {
+      setLocationFeedback(
+        'Could not fetch location. Note saved without coordinates.',
+      );
+    }
+
     dispatch(addNote(title, content, location?.latitude, location?.longitude));
     setTitle('');
     setContent('');
+    setTitleError(null);
+    setContentError(null);
     setShowForm(false);
-    setLocating(false);
+    setIsSubmitting(false);
   }, [title, content, dispatch]);
+
+  const handleCancel = useCallback(() => {
+    setTitle('');
+    setContent('');
+    setTitleError(null);
+    setContentError(null);
+    setShowForm(false);
+  }, []);
 
   const handleDelete = useCallback(
     (note: Note) => {
@@ -98,7 +134,7 @@ function NotesListScreen({ navigation }: Props) {
       className="flex-1 bg-background"
       style={{ paddingTop: insets.top }}
     >
-      {showForm && (
+      {/* {showForm && (
         <View className="mx-4 mt-3 rounded-card bg-surface p-4 shadow-sm">
           <TextInput
             className="mb-2 rounded-input border border-border px-3 py-3 text-base text-text-primary"
@@ -117,13 +153,7 @@ function NotesListScreen({ navigation }: Props) {
             textAlignVertical="top"
           />
           <View className="mt-1 flex-row justify-end gap-3">
-            <Pressable
-              onPress={() => {
-                setTitle('');
-                setContent('');
-                setShowForm(false);
-              }}
-            >
+            <Pressable onPress={handleCancel} disabled={isSubmitting}>
               <Text className="px-4 py-2 text-base text-text-secondary">
                 Cancel
               </Text>
@@ -138,7 +168,7 @@ function NotesListScreen({ navigation }: Props) {
             </Pressable>
           </View>
         </View>
-      )}
+      )} */}
 
       <FlatList
         data={notes}

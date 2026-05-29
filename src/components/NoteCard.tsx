@@ -31,7 +31,7 @@ function NoteCard({ note, onPress, onLongPress }: NoteCardProps) {
         <Text className="mt-1 text-xs text-text-tertiary">
           {new Date(note.updatedAt).toLocaleDateString()}
         </Text>
-        {note.latitude && note.longitude && (
+        {note.latitude != null && note.longitude != null && (
           <Text className="mt-1 text-xs text-text-tertiary">
             📍 {note.latitude.toFixed(4)}, {note.longitude.toFixed(4)}
           </Text>
