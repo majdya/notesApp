@@ -8,12 +8,11 @@ import {
   Text,
   TextInput,
   View,
-  ActivityIndicator,
 } from 'react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
-import { addNote, deleteNote, Note } from '../store/notesSlice';
+import { addNote, deleteNote, updateNote, Note } from '../store/notesSlice';
 import NoteCard from '../components/NoteCard';
 import { RootStackParamList } from '../navigation/AppNavigator';
 import { getCurrentLocation } from '../hooks/useLocation';
@@ -37,8 +36,6 @@ function NotesListScreen({ navigation }: Props) {
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
   const [showForm, setShowForm] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [locationFeedback, setLocationFeedback] = useState<string | null>(null);
   const [titleError, setTitleError] = useState<string | null>(null);
   const [contentError, setContentError] = useState<string | null>(null);
 
@@ -52,36 +49,36 @@ function NotesListScreen({ navigation }: Props) {
     setContentError(validateNoteContent(text));
   }, []);
 
-  const handleCreate = useCallback(async () => {
+  const handleCreate = useCallback(() => {
     const titleErr = validateNoteTitle(title);
     const contentErr = validateNoteContent(content);
     setTitleError(titleErr);
     setContentError(contentErr);
     if (titleErr || contentErr) return;
 
-    setIsSubmitting(true);
-    setLocationFeedback(null);
-
-    try {
-      const location = await getCurrentLocation();
-      if (!location) {
-        setLocationFeedback(
-          'Could not fetch location. Note saved without coordinates.',
-        );
-      }
-
-      dispatch(addNote(title, content, location?.latitude, location?.longitude));
-    } catch {
-      setLocationFeedback('Something went wrong. Note saved without location.');
-      dispatch(addNote(title, content, null, null));
-    }
+    const { payload: newNote } = dispatch(
+      addNote(title, content, null, null),
+    );
 
     setTitle('');
     setContent('');
     setTitleError(null);
     setContentError(null);
     setShowForm(false);
-    setIsSubmitting(false);
+
+    getCurrentLocation().then(location => {
+      if (location) {
+        dispatch(
+          updateNote({
+            id: newNote.id,
+            title: title.trim(),
+            content: content.trim(),
+            latitude: location.latitude,
+            longitude: location.longitude,
+          }),
+        );
+      }
+    });
   }, [title, content, dispatch]);
 
   const handleCancel = useCallback(() => {
@@ -148,7 +145,6 @@ function NotesListScreen({ navigation }: Props) {
             placeholderTextColor="#999"
             value={title}
             onChangeText={handleTitleChange}
-            editable={!isSubmitting}
           />
           <FieldError error={titleError} />
           <TextInput
@@ -159,36 +155,21 @@ function NotesListScreen({ navigation }: Props) {
             onChangeText={handleContentChange}
             multiline
             textAlignVertical="top"
-            editable={!isSubmitting}
           />
           <FieldError error={contentError} />
-          {locationFeedback && (
-            <Text className="mb-1 text-xs text-text-tertiary">
-              {locationFeedback}
-            </Text>
-          )}
           <View className="mt-1 flex-row justify-end gap-3">
-            <Pressable onPress={handleCancel} disabled={isSubmitting}>
+            <Pressable onPress={handleCancel}>
               <Text className="px-4 py-2 text-base text-text-secondary">
                 Cancel
               </Text>
             </Pressable>
             <Pressable
-              disabled={!title.trim() || isSubmitting}
+              disabled={!title.trim()}
               className={`rounded-button px-5 py-2 
-                ${title.trim() && !isSubmitting ? 'bg-primary' : 'bg-primary/20'}`}
+                ${title.trim() ? 'bg-primary' : 'bg-primary/20'}`}
               onPress={handleCreate}
             >
-              {isSubmitting ? (
-                <View className="flex-row items-center gap-2">
-                  <ActivityIndicator color="#fff" size="small" />
-                  <Text className="text-base font-semibold text-white">
-                    Locating...
-                  </Text>
-                </View>
-              ) : (
-                <Text className="text-base font-semibold text-white">Save</Text>
-              )}
+              <Text className="text-base font-semibold text-white">Save</Text>
             </Pressable>
           </View>
         </View>

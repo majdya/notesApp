@@ -47,13 +47,23 @@ const notesSlice = createSlice({
     },
     updateNote(
       state,
-      action: PayloadAction<{ id: string; title: string; content: string }>,
+      action: PayloadAction<{
+        id: string;
+        title: string;
+        content: string;
+        latitude?: number | null;
+        longitude?: number | null;
+      }>,
     ) {
       const note = state.notes.find(n => n.id === action.payload.id);
       if (note) {
         note.title = action.payload.title;
         note.content = action.payload.content;
         note.updatedAt = new Date().toISOString();
+        if (action.payload.latitude !== undefined) {
+          note.latitude = action.payload.latitude;
+          note.longitude = action.payload.longitude;
+        }
       }
     },
     deleteNote(state, action: PayloadAction<string>) {

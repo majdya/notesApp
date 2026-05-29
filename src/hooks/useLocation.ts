@@ -28,7 +28,7 @@ export async function getCurrentLocation(): Promise<{
             longitude: pos.coords.longitude,
           }),
         () => resolve(null),
-        { enableHighAccuracy: true, timeout: 10000, maximumAge: 30000 },
+        { enableHighAccuracy: true, timeout: 5000, maximumAge: 60000 },
       );
     });
   } catch {
