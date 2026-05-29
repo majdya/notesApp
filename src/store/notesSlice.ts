@@ -23,8 +23,10 @@ const notesSlice = createSlice({
     addNote: {
       prepare: (title: string, content: string) => ({
         payload: {
-          id: Date.now().toString(36) + Math.random().toString(36).substring(2, 10),
-          title: title.trim() || 'Untitled',
+          id:
+            Date.now().toString(36) +
+            Math.random().toString(36).substring(2, 10),
+          title: title.trim(),
           content: content.trim(),
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),

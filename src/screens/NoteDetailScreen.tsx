@@ -28,14 +28,14 @@ function NoteDetailScreen({ route, navigation }: Props) {
   const [dirty, setDirty] = useState(false);
 
   const handleSave = useCallback(() => {
-    if (!title.trim() && !content.trim()) {
-      Alert.alert('Empty note', 'Add a title or content to your note.');
+    if (!title.trim()) {
+      Alert.alert('Empty Title', 'Title is required.');
       return;
     }
     dispatch(
       updateNote({
         id: noteId,
-        title: title.trim() || 'Untitled',
+        title: title.trim(),
         content: content.trim(),
       }),
     );
@@ -78,11 +78,13 @@ function NoteDetailScreen({ route, navigation }: Props) {
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      className="flex-1 bg-background">
+      className="flex-1 bg-background"
+    >
       <ScrollView
         className="flex-1"
         contentContainerStyle={{ padding: 16 }}
-        keyboardShouldPersistTaps="handled">
+        keyboardShouldPersistTaps="handled"
+      >
         <TextInput
           className="border-b border-border pb-3 mb-4 text-2xl font-bold text-text-primary"
           value={title}
@@ -103,19 +105,21 @@ function NoteDetailScreen({ route, navigation }: Props) {
           Created: {new Date(note.createdAt).toLocaleString()} • Updated:{' '}
           {new Date(note.updatedAt).toLocaleString()}
         </Text>
-
         <View className="gap-3">
           <Pressable
-            className={`rounded-button py-3.5 ${dirty ? 'bg-primary' : 'bg-blue-200'}`}
+            className={`rounded-button py-3.5 
+              ${dirty && title.trim() ? 'bg-primary' : 'bg-blue-200'}`}
             onPress={handleSave}
-            disabled={!dirty}>
+            disabled={!dirty || !title.trim()}
+          >
             <Text className="text-center text-base font-semibold text-white">
               Save Changes
             </Text>
           </Pressable>
           <Pressable
             className="rounded-button border border-danger py-3.5"
-            onPress={handleDelete}>
+            onPress={handleDelete}
+          >
             <Text className="text-center text-base font-semibold text-danger">
               Delete Note
             </Text>

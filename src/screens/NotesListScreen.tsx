@@ -34,8 +34,8 @@ function NotesListScreen({ navigation }: Props) {
   const [showForm, setShowForm] = useState(false);
 
   const handleCreate = useCallback(() => {
-    if (!title.trim() && !content.trim()) {
-      Alert.alert('Empty note', 'Add a title or content to your note.');
+    if (!title.trim()) {
+      Alert.alert('Empty note title', 'Title is required.');
       return;
     }
     dispatch(addNote(title, content));
@@ -67,11 +67,7 @@ function NotesListScreen({ navigation }: Props) {
 
   const renderItem = useCallback(
     ({ item }: { item: Note }) => (
-      <NoteCard
-        note={item}
-        onPress={handlePress}
-        onLongPress={handleDelete}
-      />
+      <NoteCard note={item} onPress={handlePress} onLongPress={handleDelete} />
     ),
     [handlePress, handleDelete],
   );
@@ -94,7 +90,8 @@ function NotesListScreen({ navigation }: Props) {
     <KeyboardAvoidingView
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       className="flex-1 bg-background"
-      style={{ paddingTop: insets.top }}>
+      style={{ paddingTop: insets.top }}
+    >
       {showForm && (
         <View className="mx-4 mt-3 rounded-card bg-surface p-4 shadow-sm">
           <TextInput
@@ -119,14 +116,18 @@ function NotesListScreen({ navigation }: Props) {
                 setTitle('');
                 setContent('');
                 setShowForm(false);
-              }}>
+              }}
+            >
               <Text className="px-4 py-2 text-base text-text-secondary">
                 Cancel
               </Text>
             </Pressable>
             <Pressable
-              className="rounded-button bg-primary px-5 py-2"
-              onPress={handleCreate}>
+              disabled={!title.trim()}
+              className={`rounded-button px-5 py-2 
+                ${title.trim() ? 'bg-primary' : 'bg-primary/20'}`}
+              onPress={handleCreate}
+            >
               <Text className="text-base font-semibold text-white">Save</Text>
             </Pressable>
           </View>
@@ -139,9 +140,7 @@ function NotesListScreen({ navigation }: Props) {
         renderItem={renderItem}
         ListEmptyComponent={renderEmpty}
         contentContainerStyle={
-          notes.length === 0
-            ? { flex: 1 }
-            : { paddingVertical: 8 }
+          notes.length === 0 ? { flex: 1 } : { paddingVertical: 8 }
         }
       />
 
@@ -155,7 +154,8 @@ function NotesListScreen({ navigation }: Props) {
             shadowOpacity: 0.3,
             shadowRadius: 8,
           }}
-          onPress={() => setShowForm(true)}>
+          onPress={() => setShowForm(true)}
+        >
           <Text className="text-3xl leading-8 text-white">+</Text>
         </Pressable>
       )}
