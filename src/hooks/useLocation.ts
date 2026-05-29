@@ -1,16 +1,18 @@
 import { Platform, PermissionsAndroid } from 'react-native';
 import Geolocation from '@react-native-community/geolocation';
 
-export async function requestLocationPermission(): Promise<void> {
+export async function requestLocationPermission(): Promise<boolean> {
   if (Platform.OS === 'android') {
     try {
-      await PermissionsAndroid.request(
+      const result = await PermissionsAndroid.request(
         PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
       );
+      return result === PermissionsAndroid.RESULTS.GRANTED;
     } catch {
-      // user denied or error — fine
+      return false;
     }
   }
+  return true; // iOS permission prompt auto-triggers on first geolocation call
 }
 
 export async function getCurrentLocation(): Promise<{
