@@ -2,22 +2,24 @@ import { useCallback, useState } from 'react';
 import {
   Alert,
   FlatList,
-  StyleSheet,
+  KeyboardAvoidingView,
+  Platform,
+  Pressable,
   Text,
   TextInput,
-  TouchableOpacity,
   View,
 } from 'react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import uuid from 'react-native-uuid';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
-import { addNote, deleteNote } from '../store/notesSlice';
+import { addNote, deleteNote, Note } from '../store/notesSlice';
 import NoteCard from '../components/NoteCard';
-import { Note } from '../types/note';
 import { RootStackParamList } from '../navigation/AppNavigator';
 
-type NotesListNavProp = NativeStackNavigationProp<RootStackParamList, 'NotesList'>;
+type NotesListNavProp = NativeStackNavigationProp<
+  RootStackParamList,
+  'NotesList'
+>;
 
 interface Props {
   navigation: NotesListNavProp;
@@ -36,16 +38,7 @@ function NotesListScreen({ navigation }: Props) {
       Alert.alert('Empty note', 'Add a title or content to your note.');
       return;
     }
-    const now = new Date().toISOString();
-    dispatch(
-      addNote({
-        id: uuid.v4().toString(),
-        title: title.trim() || 'Untitled',
-        content: content.trim(),
-        createdAt: now,
-        updatedAt: now,
-      }),
-    );
+    dispatch(addNote(title, content));
     setTitle('');
     setContent('');
     setShowForm(false);
@@ -85,46 +78,57 @@ function NotesListScreen({ navigation }: Props) {
 
   const renderEmpty = useCallback(
     () => (
-      <View style={styles.empty}>
-        <Text style={styles.emptyTitle}>No notes yet</Text>
-        <Text style={styles.emptySubtitle}>Tap the + button to create one</Text>
+      <View className="flex-1 items-center justify-center">
+        <Text className="text-lg font-semibold text-text-tertiary">
+          No notes yet
+        </Text>
+        <Text className="text-sm text-text-tertiary mt-1">
+          Tap the + button to create one
+        </Text>
       </View>
     ),
     [],
   );
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top }]}>
+    <KeyboardAvoidingView
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      className="flex-1 bg-background"
+      style={{ paddingTop: insets.top }}>
       {showForm && (
-        <View style={styles.form}>
+        <View className="mx-4 mt-3 rounded-card bg-surface p-4 shadow-sm">
           <TextInput
-            style={styles.input}
+            className="mb-2 rounded-input border border-border px-3 py-3 text-base text-text-primary"
             placeholder="Note title"
             placeholderTextColor="#999"
             value={title}
             onChangeText={setTitle}
           />
           <TextInput
-            style={[styles.input, styles.contentInput]}
+            className="mb-2 min-h-[80px] rounded-input border border-border px-3 py-3 text-base text-text-primary"
             placeholder="Note content"
             placeholderTextColor="#999"
             value={content}
             onChangeText={setContent}
             multiline
+            textAlignVertical="top"
           />
-          <View style={styles.formActions}>
-            <TouchableOpacity
-              style={styles.cancelBtn}
+          <View className="mt-1 flex-row justify-end gap-3">
+            <Pressable
               onPress={() => {
                 setTitle('');
                 setContent('');
                 setShowForm(false);
               }}>
-              <Text style={styles.cancelText}>Cancel</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.saveBtn} onPress={handleCreate}>
-              <Text style={styles.saveText}>Save</Text>
-            </TouchableOpacity>
+              <Text className="px-4 py-2 text-base text-text-secondary">
+                Cancel
+              </Text>
+            </Pressable>
+            <Pressable
+              className="rounded-button bg-primary px-5 py-2"
+              onPress={handleCreate}>
+              <Text className="text-base font-semibold text-white">Save</Text>
+            </Pressable>
           </View>
         </View>
       )}
@@ -134,116 +138,29 @@ function NotesListScreen({ navigation }: Props) {
         keyExtractor={item => item.id}
         renderItem={renderItem}
         ListEmptyComponent={renderEmpty}
-        contentContainerStyle={notes.length === 0 ? styles.emptyList : styles.list}
+        contentContainerStyle={
+          notes.length === 0
+            ? { flex: 1 }
+            : { paddingVertical: 8 }
+        }
       />
 
       {!showForm && (
-        <TouchableOpacity
-          style={[styles.fab, { bottom: insets.bottom + 24 }]}
+        <Pressable
+          className="absolute bottom-6 right-6 h-14 w-14 items-center justify-center rounded-fab bg-primary shadow-lg"
+          style={{
+            bottom: insets.bottom + 24,
+            shadowColor: '#007AFF',
+            shadowOffset: { width: 0, height: 4 },
+            shadowOpacity: 0.3,
+            shadowRadius: 8,
+          }}
           onPress={() => setShowForm(true)}>
-          <Text style={styles.fabText}>+</Text>
-        </TouchableOpacity>
+          <Text className="text-3xl leading-8 text-white">+</Text>
+        </Pressable>
       )}
-    </View>
+    </KeyboardAvoidingView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#f5f5f5',
-  },
-  form: {
-    backgroundColor: '#fff',
-    marginHorizontal: 16,
-    marginTop: 12,
-    borderRadius: 12,
-    padding: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  input: {
-    borderWidth: 1,
-    borderColor: '#e0e0e0',
-    borderRadius: 8,
-    padding: 12,
-    fontSize: 15,
-    color: '#1a1a1a',
-    marginBottom: 8,
-  },
-  contentInput: {
-    minHeight: 80,
-    textAlignVertical: 'top',
-  },
-  formActions: {
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
-    gap: 12,
-    marginTop: 4,
-  },
-  cancelBtn: {
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-  },
-  cancelText: {
-    fontSize: 15,
-    color: '#666',
-  },
-  saveBtn: {
-    backgroundColor: '#007AFF',
-    paddingVertical: 8,
-    paddingHorizontal: 20,
-    borderRadius: 8,
-  },
-  saveText: {
-    fontSize: 15,
-    color: '#fff',
-    fontWeight: '600',
-  },
-  list: {
-    paddingVertical: 8,
-  },
-  emptyList: {
-    flex: 1,
-  },
-  empty: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  emptyTitle: {
-    fontSize: 20,
-    fontWeight: '600',
-    color: '#999',
-  },
-  emptySubtitle: {
-    fontSize: 15,
-    color: '#bbb',
-    marginTop: 4,
-  },
-  fab: {
-    position: 'absolute',
-    right: 24,
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: '#007AFF',
-    justifyContent: 'center',
-    alignItems: 'center',
-    shadowColor: '#007AFF',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 6,
-  },
-  fabText: {
-    fontSize: 28,
-    color: '#fff',
-    lineHeight: 30,
-  },
-});
 
 export default NotesListScreen;

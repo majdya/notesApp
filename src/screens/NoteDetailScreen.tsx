@@ -1,11 +1,12 @@
 import { useCallback, useState } from 'react';
 import {
   Alert,
+  KeyboardAvoidingView,
+  Platform,
+  Pressable,
   ScrollView,
-  StyleSheet,
   Text,
   TextInput,
-  TouchableOpacity,
   View,
 } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -68,126 +69,61 @@ function NoteDetailScreen({ route, navigation }: Props) {
 
   if (!note) {
     return (
-      <View style={styles.centered}>
-        <Text style={styles.errorText}>Note not found</Text>
+      <View className="flex-1 items-center justify-center">
+        <Text className="text-lg text-text-tertiary">Note not found</Text>
       </View>
     );
   }
 
   return (
-    <ScrollView
-      style={styles.container}
-      contentContainerStyle={styles.content}
-      keyboardShouldPersistTaps="handled">
-      <TextInput
-        style={styles.titleInput}
-        value={title}
-        onChangeText={handleChangeTitle}
-        placeholder="Note title"
-        placeholderTextColor="#999"
-      />
-      <TextInput
-        style={styles.contentInput}
-        value={content}
-        onChangeText={handleChangeContent}
-        placeholder="Note content"
-        placeholderTextColor="#999"
-        multiline
-        textAlignVertical="top"
-      />
-      <Text style={styles.meta}>
-        Created: {new Date(note.createdAt).toLocaleString()} • Updated:{' '}
-        {new Date(note.updatedAt).toLocaleString()}
-      </Text>
+    <KeyboardAvoidingView
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      className="flex-1 bg-background">
+      <ScrollView
+        className="flex-1"
+        contentContainerStyle={{ padding: 16 }}
+        keyboardShouldPersistTaps="handled">
+        <TextInput
+          className="border-b border-border pb-3 mb-4 text-2xl font-bold text-text-primary"
+          value={title}
+          onChangeText={handleChangeTitle}
+          placeholder="Note title"
+          placeholderTextColor="#999"
+        />
+        <TextInput
+          className="min-h-[200px] py-3 text-base leading-6 text-text-primary"
+          value={content}
+          onChangeText={handleChangeContent}
+          placeholder="Note content"
+          placeholderTextColor="#999"
+          multiline
+          textAlignVertical="top"
+        />
+        <Text className="mt-4 mb-6 text-xs text-text-tertiary">
+          Created: {new Date(note.createdAt).toLocaleString()} • Updated:{' '}
+          {new Date(note.updatedAt).toLocaleString()}
+        </Text>
 
-      <View style={styles.actions}>
-        <TouchableOpacity
-          style={[styles.btn, !dirty && styles.btnDisabled]}
-          onPress={handleSave}
-          disabled={!dirty}>
-          <Text style={[styles.btnText, !dirty && styles.btnTextDisabled]}>
-            Save Changes
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.deleteBtn} onPress={handleDelete}>
-          <Text style={styles.deleteText}>Delete Note</Text>
-        </TouchableOpacity>
-      </View>
-    </ScrollView>
+        <View className="gap-3">
+          <Pressable
+            className={`rounded-button py-3.5 ${dirty ? 'bg-primary' : 'bg-blue-200'}`}
+            onPress={handleSave}
+            disabled={!dirty}>
+            <Text className="text-center text-base font-semibold text-white">
+              Save Changes
+            </Text>
+          </Pressable>
+          <Pressable
+            className="rounded-button border border-danger py-3.5"
+            onPress={handleDelete}>
+            <Text className="text-center text-base font-semibold text-danger">
+              Delete Note
+            </Text>
+          </Pressable>
+        </View>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#f5f5f5',
-  },
-  content: {
-    padding: 16,
-  },
-  centered: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  errorText: {
-    fontSize: 18,
-    color: '#999',
-  },
-  titleInput: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: '#1a1a1a',
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#e0e0e0',
-    marginBottom: 16,
-  },
-  contentInput: {
-    fontSize: 16,
-    color: '#333',
-    lineHeight: 24,
-    minHeight: 200,
-    paddingVertical: 12,
-  },
-  meta: {
-    fontSize: 12,
-    color: '#999',
-    marginTop: 16,
-    marginBottom: 24,
-  },
-  actions: {
-    gap: 12,
-  },
-  btn: {
-    backgroundColor: '#007AFF',
-    paddingVertical: 14,
-    borderRadius: 10,
-    alignItems: 'center',
-  },
-  btnDisabled: {
-    backgroundColor: '#cce4ff',
-  },
-  btnText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  btnTextDisabled: {
-    color: '#fff',
-  },
-  deleteBtn: {
-    paddingVertical: 14,
-    borderRadius: 10,
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#ff4444',
-  },
-  deleteText: {
-    color: '#ff4444',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-});
 
 export default NoteDetailScreen;
