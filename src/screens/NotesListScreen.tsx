@@ -62,14 +62,20 @@ function NotesListScreen({ navigation }: Props) {
     setIsSubmitting(true);
     setLocationFeedback(null);
 
-    const location = await getCurrentLocation();
-    if (!location) {
-      setLocationFeedback(
-        'Could not fetch location. Note saved without coordinates.',
-      );
+    try {
+      const location = await getCurrentLocation();
+      if (!location) {
+        setLocationFeedback(
+          'Could not fetch location. Note saved without coordinates.',
+        );
+      }
+
+      dispatch(addNote(title, content, location?.latitude, location?.longitude));
+    } catch {
+      setLocationFeedback('Something went wrong. Note saved without location.');
+      dispatch(addNote(title, content, null, null));
     }
 
-    dispatch(addNote(title, content, location?.latitude, location?.longitude));
     setTitle('');
     setContent('');
     setTitleError(null);
@@ -134,24 +140,33 @@ function NotesListScreen({ navigation }: Props) {
       className="flex-1 bg-background"
       style={{ paddingTop: insets.top }}
     >
-      {/* {showForm && (
+      {showForm && (
         <View className="mx-4 mt-3 rounded-card bg-surface p-4 shadow-sm">
           <TextInput
-            className="mb-2 rounded-input border border-border px-3 py-3 text-base text-text-primary"
+            className="mb-1 rounded-input border border-border px-3 py-3 text-base text-text-primary"
             placeholder="Note title"
             placeholderTextColor="#999"
             value={title}
-            onChangeText={setTitle}
+            onChangeText={handleTitleChange}
+            editable={!isSubmitting}
           />
+          <FieldError error={titleError} />
           <TextInput
-            className="mb-2 min-h-[80px] rounded-input border border-border px-3 py-3 text-base text-text-primary"
+            className="mb-1 min-h-[80px] rounded-input border border-border px-3 py-3 text-base text-text-primary"
             placeholder="Note content"
             placeholderTextColor="#999"
             value={content}
-            onChangeText={setContent}
+            onChangeText={handleContentChange}
             multiline
             textAlignVertical="top"
+            editable={!isSubmitting}
           />
+          <FieldError error={contentError} />
+          {locationFeedback && (
+            <Text className="mb-1 text-xs text-text-tertiary">
+              {locationFeedback}
+            </Text>
+          )}
           <View className="mt-1 flex-row justify-end gap-3">
             <Pressable onPress={handleCancel} disabled={isSubmitting}>
               <Text className="px-4 py-2 text-base text-text-secondary">
@@ -159,16 +174,25 @@ function NotesListScreen({ navigation }: Props) {
               </Text>
             </Pressable>
             <Pressable
-              disabled={!title.trim()}
+              disabled={!title.trim() || isSubmitting}
               className={`rounded-button px-5 py-2 
-                ${title.trim() ? 'bg-primary' : 'bg-primary/20'}`}
+                ${title.trim() && !isSubmitting ? 'bg-primary' : 'bg-primary/20'}`}
               onPress={handleCreate}
             >
-              <Text className="text-base font-semibold text-white">Save</Text>
+              {isSubmitting ? (
+                <View className="flex-row items-center gap-2">
+                  <ActivityIndicator color="#fff" size="small" />
+                  <Text className="text-base font-semibold text-white">
+                    Locating...
+                  </Text>
+                </View>
+              ) : (
+                <Text className="text-base font-semibold text-white">Save</Text>
+              )}
             </Pressable>
           </View>
         </View>
-      )} */}
+      )}
 
       <FlatList
         data={notes}
