@@ -1,5 +1,12 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-import { Note } from '../types/note';
+
+export interface Note {
+  id: string;
+  title: string;
+  content: string;
+  createdAt: string;
+  updatedAt: string;
+}
 
 interface NotesState {
   notes: Note[];
@@ -13,8 +20,19 @@ const notesSlice = createSlice({
   name: 'notes',
   initialState,
   reducers: {
-    addNote(state, action: PayloadAction<Note>) {
-      state.notes.unshift(action.payload);
+    addNote: {
+      prepare: (title: string, content: string) => ({
+        payload: {
+          id: Date.now().toString(36) + Math.random().toString(36).substring(2, 10),
+          title: title.trim() || 'Untitled',
+          content: content.trim(),
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        },
+      }),
+      reducer: (state, action: PayloadAction<Note>) => {
+        state.notes.unshift(action.payload);
+      },
     },
     updateNote(
       state,
