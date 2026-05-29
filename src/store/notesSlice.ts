@@ -4,6 +4,8 @@ export interface Note {
   id: string;
   title: string;
   content: string;
+  latitude?: number | null;
+  longitude?: number | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -21,13 +23,20 @@ const notesSlice = createSlice({
   initialState,
   reducers: {
     addNote: {
-      prepare: (title: string, content: string) => ({
+      prepare: (
+        title: string,
+        content: string,
+        latitude?: number | null,
+        longitude?: number | null,
+      ) => ({
         payload: {
           id:
             Date.now().toString(36) +
             Math.random().toString(36).substring(2, 10),
           title: title.trim(),
           content: content.trim(),
+          latitude: latitude ?? null,
+          longitude: longitude ?? null,
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
         },
