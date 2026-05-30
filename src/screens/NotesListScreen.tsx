@@ -57,9 +57,7 @@ function NotesListScreen({ navigation }: Props) {
     setContentError(contentErr);
     if (titleErr || contentErr) return;
 
-    const { payload: newNote } = dispatch(
-      addNote(title, content, null, null),
-    );
+    const { payload: newNote } = dispatch(addNote(title, content, null, null));
 
     setTitle('');
     setContent('');
@@ -121,9 +119,9 @@ function NotesListScreen({ navigation }: Props) {
   const renderEmpty = useCallback(
     () => (
       <View className="flex-1 items-center justify-center px-8">
-        <View className="h-12 w-12 items-center justify-center rounded-full bg-primaryLight mb-4">
+        {/* <View className="h-12 w-12 items-center justify-center rounded-full bg-primaryLight mb-4">
           <Text className="text-xl text-primary">+</Text>
-        </View>
+        </View> */}
         <Text className="text-lg font-semibold text-text-primary">
           No notes yet
         </Text>
@@ -220,7 +218,9 @@ function NotesListScreen({ navigation }: Props) {
         renderItem={renderItem}
         ListEmptyComponent={renderEmpty}
         contentContainerStyle={
-          notes.length === 0 ? { flex: 1 } : { paddingBottom: 100, paddingTop: 4 }
+          notes.length === 0
+            ? { flex: 1 }
+            : { paddingBottom: 100, paddingTop: 4 }
         }
       />
 
