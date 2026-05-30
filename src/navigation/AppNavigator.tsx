@@ -4,6 +4,7 @@ import NotesListScreen from '../screens/NotesListScreen';
 import NoteDetailScreen from '../screens/NoteDetailScreen';
 import MapScreen from '../screens/MapScreen';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
+import type { NavigatorScreenParams } from '@react-navigation/native';
 
 export type RootStackParamList = {
   NotesList: undefined;
@@ -64,3 +65,8 @@ function AppNavigator() {
 }
 
 export default AppNavigator;
+
+export type RootTabParamList = {
+  NotesTab: NavigatorScreenParams<RootStackParamList>;
+  MapTab: undefined;
+};

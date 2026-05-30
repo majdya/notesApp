@@ -16,7 +16,7 @@ import { useAppDispatch, useAppSelector } from '../store/hooks';
 import { addNote, deleteNote, updateNote, Note } from '../store/notesSlice';
 import NoteCard from '../components/NoteCard';
 import { RootStackParamList } from '../navigation/AppNavigator';
-import { getCurrentLocation } from '../hooks/useLocation';
+import { getCurrentLocation, requestLocationPermission } from '../hooks/useLocation';
 
 import FieldError from '../components/FieldError';
 import { validateNoteTitle, validateNoteContent } from '../utils/validations';
@@ -50,7 +50,7 @@ function NotesListScreen({ navigation }: Props) {
     setContentError(validateNoteContent(text));
   }, []);
 
-  const handleCreate = useCallback(() => {
+  const handleCreate = useCallback(async () => {
     const titleErr = validateNoteTitle(title);
     const contentErr = validateNoteContent(content);
     setTitleError(titleErr);
@@ -65,19 +65,21 @@ function NotesListScreen({ navigation }: Props) {
     setContentError(null);
     setShowForm(false);
 
-    getCurrentLocation().then(location => {
-      if (location) {
-        dispatch(
-          updateNote({
-            id: newNote.id,
-            title: title.trim(),
-            content: content.trim(),
-            latitude: location.latitude,
-            longitude: location.longitude,
-          }),
-        );
-      }
-    });
+    const hasPermission = await requestLocationPermission();
+    if (!hasPermission) return;
+
+    const location = await getCurrentLocation();
+    if (location) {
+      dispatch(
+        updateNote({
+          id: newNote.id,
+          title: title.trim(),
+          content: content.trim(),
+          latitude: location.latitude,
+          longitude: location.longitude,
+        }),
+      );
+    }
   }, [title, content, dispatch]);
 
   const handleCancel = useCallback(() => {
