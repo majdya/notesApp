@@ -15,23 +15,22 @@ export async function requestLocationPermission(): Promise<boolean> {
   return true; // iOS permission prompt auto-triggers on first geolocation call
 }
 
-export async function getCurrentLocation(): Promise<{
+export function getCurrentLocation(): Promise<{
   latitude: number;
   longitude: number;
 } | null> {
-  try {
-    return new Promise(resolve => {
-      Geolocation.getCurrentPosition(
-        pos =>
-          resolve({
-            latitude: pos.coords.latitude,
-            longitude: pos.coords.longitude,
-          }),
-        () => resolve(null),
-        { enableHighAccuracy: true, timeout: 5000, maximumAge: 60000 },
-      );
-    });
-  } catch {
-    return null;
-  }
+  return new Promise(resolve => {
+    Geolocation.getCurrentPosition(
+      pos =>
+        resolve({
+          latitude: pos.coords.latitude,
+          longitude: pos.coords.longitude,
+        }),
+      err => {
+        console.warn('getCurrentLocation error:', err.code, err.message);
+        resolve(null);
+      },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 },
+    );
+  });
 }
