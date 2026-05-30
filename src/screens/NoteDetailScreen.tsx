@@ -1,6 +1,5 @@
-import { useCallback, useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import {
-  Alert,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -8,16 +7,18 @@ import {
   Text,
   TextInput,
   View,
-  ActivityIndicator,
 } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation/AppNavigator';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
 import { updateNote, deleteNote } from '../store/notesSlice';
+import ConfirmDialog from '../components/ConfirmDialog';
 import FieldError from '../components/FieldError';
 import { validateNoteTitle } from '../utils/validations';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'NoteDetail'>;
+
+const KEYBOARD_BEHAVIOR: 'padding' | undefined = Platform.OS === 'ios' ? 'padding' : undefined;
 
 function NoteDetailScreen({ route, navigation }: Props) {
   const { noteId } = route.params;
@@ -29,31 +30,23 @@ function NoteDetailScreen({ route, navigation }: Props) {
   const [title, setTitle] = useState(note?.title ?? '');
   const [content, setContent] = useState(note?.content ?? '');
   const [dirty, setDirty] = useState(false);
-  const [isSaving, setIsSaving] = useState(false);
   const [titleError, setTitleError] = useState<string | null>(null);
   const isSavingRef = useRef(false);
+  const [showUnsavedDialog, setShowUnsavedDialog] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const pendingActionRef = useRef<(() => void) | null>(null);
 
   useEffect(() => {
     const unsubscribe = navigation.addListener('beforeRemove', e => {
       if (!dirty || isSavingRef.current) return;
       e.preventDefault();
-      Alert.alert(
-        'Unsaved changes',
-        'You have unsaved changes. Discard them?',
-        [
-          { text: 'Keep editing', style: 'cancel' },
-          {
-            text: 'Discard',
-            style: 'destructive',
-            onPress: () => navigation.dispatch(e.data.action),
-          },
-        ],
-      );
+      pendingActionRef.current = () => navigation.dispatch(e.data.action);
+      setShowUnsavedDialog(true);
     });
     return unsubscribe;
   }, [navigation, dirty]);
 
-  const handleSave = useCallback(async () => {
+  const handleSave = () => {
     const titleErr = validateNoteTitle(title);
     setTitleError(titleErr);
     if (titleErr) return;
@@ -68,32 +61,22 @@ function NoteDetailScreen({ route, navigation }: Props) {
     );
     setDirty(false);
     navigation.goBack();
-  }, [dispatch, noteId, title, content, navigation]);
+  };
 
-  const handleDelete = useCallback(() => {
-    Alert.alert('Delete note', 'Are you sure?', [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Delete',
-        style: 'destructive',
-        onPress: () => {
-          dispatch(deleteNote(noteId));
-          navigation.goBack();
-        },
-      },
-    ]);
-  }, [dispatch, noteId, navigation]);
+  function handleDelete() {
+    setShowDeleteDialog(true);
+  }
 
-  const handleChangeTitle = useCallback((text: string) => {
+  function handleChangeTitle(text: string) {
     setTitle(text);
     setDirty(true);
     setTitleError(validateNoteTitle(text));
-  }, []);
+  }
 
-  const handleChangeContent = useCallback((text: string) => {
+  function handleChangeContent(text: string) {
     setContent(text);
     setDirty(true);
-  }, []);
+  }
 
   if (!note) {
     return (
@@ -111,7 +94,7 @@ function NoteDetailScreen({ route, navigation }: Props) {
 
   return (
     <KeyboardAvoidingView
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      behavior={KEYBOARD_BEHAVIOR}
       className="flex-1 bg-background"
     >
       <ScrollView
@@ -125,7 +108,6 @@ function NoteDetailScreen({ route, navigation }: Props) {
           onChangeText={handleChangeTitle}
           placeholder="Note title"
           placeholderTextColor="#aeaeb2"
-          editable={!isSaving}
         />
         <FieldError error={titleError} />
         <TextInput
@@ -136,7 +118,6 @@ function NoteDetailScreen({ route, navigation }: Props) {
           placeholderTextColor="#aeaeb2"
           multiline
           textAlignVertical="top"
-          editable={!isSaving}
         />
         <View className="mb-6 flex-row flex-wrap gap-x-4 gap-y-1">
           <Text className="text-xs text-text-tertiary">
@@ -153,32 +134,21 @@ function NoteDetailScreen({ route, navigation }: Props) {
         </View>
         <View className="gap-2.5">
           <Pressable
-            className={`rounded-button py-3.5 
-              ${
-                dirty && !titleError && title.trim() && !isSaving
-                  ? 'bg-primary'
-                  : 'bg-primary/20'
-              }`}
+            className={`rounded-button py-3.5 ${
+              dirty && !titleError && title.trim()
+                ? 'bg-primary'
+                : 'bg-primary/20'
+            }`}
             onPress={handleSave}
-            disabled={!dirty || !!titleError || !title.trim() || isSaving}
+            disabled={!dirty || !!titleError || !title.trim()}
           >
-            {isSaving ? (
-              <View className="flex-row items-center justify-center gap-2">
-                <ActivityIndicator color="#fff" size="small" />
-                <Text className="text-base font-semibold text-white">
-                  Saving...
-                </Text>
-              </View>
-            ) : (
-              <Text className="text-center text-base font-semibold text-white">
-                Save Changes
-              </Text>
-            )}
+            <Text className="text-center text-base font-semibold text-white">
+              Save Changes
+            </Text>
           </Pressable>
           <Pressable
             className="rounded-button border border-danger/30 py-3.5"
             onPress={handleDelete}
-            disabled={isSaving}
           >
             <Text className="text-center text-base font-semibold text-danger">
               Delete Note
@@ -186,6 +156,35 @@ function NoteDetailScreen({ route, navigation }: Props) {
           </Pressable>
         </View>
       </ScrollView>
+
+      <ConfirmDialog
+        visible={showUnsavedDialog}
+        title="Unsaved changes"
+        message="You have unsaved changes. Discard them?"
+        confirmLabel="Discard"
+        cancelLabel="Keep editing"
+        destructive
+        onConfirm={() => {
+          setShowUnsavedDialog(false);
+          pendingActionRef.current?.();
+        }}
+        onCancel={() => setShowUnsavedDialog(false)}
+      />
+
+      <ConfirmDialog
+        visible={showDeleteDialog}
+        title="Delete note"
+        message="Are you sure?"
+        confirmLabel="Delete"
+        cancelLabel="Cancel"
+        destructive
+        onConfirm={() => {
+          setShowDeleteDialog(false);
+          dispatch(deleteNote(noteId));
+          navigation.goBack();
+        }}
+        onCancel={() => setShowDeleteDialog(false)}
+      />
     </KeyboardAvoidingView>
   );
 }

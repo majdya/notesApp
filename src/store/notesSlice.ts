@@ -28,19 +28,22 @@ const notesSlice = createSlice({
         content: string,
         latitude?: number | null,
         longitude?: number | null,
-      ) => ({
-        payload: {
-          id:
-            Date.now().toString(36) +
-            Math.random().toString(36).substring(2, 10),
-          title: title.trim(),
-          content: content.trim(),
-          latitude: latitude ?? null,
-          longitude: longitude ?? null,
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-        },
-      }),
+      ) => {
+        const now = new Date().toISOString();
+        return {
+          payload: {
+            id:
+              Date.now().toString(36) +
+              Math.random().toString(36).substring(2, 10),
+            title: title.trim(),
+            content: content.trim(),
+            latitude: latitude ?? null,
+            longitude: longitude ?? null,
+            createdAt: now,
+            updatedAt: now,
+          },
+        };
+      },
       reducer: (state, action: PayloadAction<Note>) => {
         state.notes.unshift(action.payload);
       },

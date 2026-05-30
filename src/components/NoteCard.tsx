@@ -23,8 +23,7 @@ function formatDate(iso: string): string {
 function NoteCard({ note, onPress, onLongPress }: NoteCardProps) {
   return (
     <Pressable
-      className="mx-4 my-1.5 rounded-card bg-surface shadow-sm"
-      style={({ pressed }) => pressed && { opacity: 0.6 }}
+      className="mx-4 my-1.5 rounded-card bg-surface shadow-sm active:opacity-60"
       onPress={() => onPress(note)}
       onLongPress={() => onLongPress?.(note)}
     >
@@ -47,13 +46,15 @@ function NoteCard({ note, onPress, onLongPress }: NoteCardProps) {
             <Text className="text-xs text-text-tertiary">
               {formatDate(note.updatedAt)}
             </Text>
-            {note.latitude != null && note.longitude != null && (
-              <Text className="text-xs text-text-tertiary">•</Text>
-            )}
-            {note.latitude != null && note.longitude != null && (
-              <Text className="text-xs text-text-tertiary">
-                {note.latitude.toFixed(4)}, {note.longitude.toFixed(4)}
-              </Text>
+            {note.latitude != null && note.longitude != null ? (
+              <>
+                <Text className="text-xs text-text-tertiary">•</Text>
+                <Text className="text-xs text-text-tertiary">
+                  {note.latitude.toFixed(4)}, {note.longitude.toFixed(4)}
+                </Text>
+              </>
+            ) : (
+              <Text className="text-xs text-text-tertiary">No location</Text>
             )}
           </View>
         </View>

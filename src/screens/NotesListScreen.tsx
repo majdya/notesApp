@@ -1,6 +1,5 @@
-import { useCallback, useState } from 'react';
+import { useState } from 'react';
 import {
-  Alert,
   FlatList,
   KeyboardAvoidingView,
   Modal,
@@ -15,8 +14,9 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
 import { addNote, deleteNote, updateNote, Note } from '../store/notesSlice';
 import NoteCard from '../components/NoteCard';
+import ConfirmDialog from '../components/ConfirmDialog';
 import { RootStackParamList } from '../navigation/AppNavigator';
-import { getCurrentLocation, requestLocationPermission } from '../hooks/useLocation';
+import { getCurrentLocation } from '../utils/location';
 
 import FieldError from '../components/FieldError';
 import { validateNoteTitle, validateNoteContent } from '../utils/validations';
@@ -30,6 +30,22 @@ interface Props {
   navigation: NotesListNavProp;
 }
 
+const KEYBOARD_BEHAVIOR: 'padding' | undefined =
+  Platform.OS === 'ios' ? 'padding' : undefined;
+
+function ListEmpty() {
+  return (
+    <View className="flex-1 items-center justify-center px-8">
+      <Text className="text-lg font-semibold text-text-primary">
+        No notes yet
+      </Text>
+      <Text className="mt-1 text-center text-sm text-text-secondary">
+        Tap the button below to create your first note
+      </Text>
+    </View>
+  );
+}
+
 function NotesListScreen({ navigation }: Props) {
   const { notes } = useAppSelector(state => state.notes);
   const dispatch = useAppDispatch();
@@ -39,18 +55,19 @@ function NotesListScreen({ navigation }: Props) {
   const [showForm, setShowForm] = useState(false);
   const [titleError, setTitleError] = useState<string | null>(null);
   const [contentError, setContentError] = useState<string | null>(null);
+  const [noteToDelete, setNoteToDelete] = useState<Note | null>(null);
 
-  const handleTitleChange = useCallback((text: string) => {
+  function handleTitleChange(text: string) {
     setTitle(text);
     setTitleError(validateNoteTitle(text));
-  }, []);
+  }
 
-  const handleContentChange = useCallback((text: string) => {
+  function handleContentChange(text: string) {
     setContent(text);
     setContentError(validateNoteContent(text));
-  }, []);
+  }
 
-  const handleCreate = useCallback(async () => {
+  function handleCreate() {
     const titleErr = validateNoteTitle(title);
     const contentErr = validateNoteContent(content);
     setTitleError(titleErr);
@@ -65,11 +82,11 @@ function NotesListScreen({ navigation }: Props) {
     setContentError(null);
     setShowForm(false);
 
-    const hasPermission = await requestLocationPermission();
-    if (!hasPermission) return;
-
-    const location = await getCurrentLocation();
-    if (location) {
+    getCurrentLocation().then(location => {
+      if (!location) {
+        console.warn('No location available for note', newNote.id);
+        return;
+      }
       dispatch(
         updateNote({
           id: newNote.id,
@@ -79,65 +96,28 @@ function NotesListScreen({ navigation }: Props) {
           longitude: location.longitude,
         }),
       );
-    }
-  }, [title, content, dispatch]);
+    });
+  }
 
-  const handleCancel = useCallback(() => {
+  function handleCancel() {
     setTitle('');
     setContent('');
     setTitleError(null);
     setContentError(null);
     setShowForm(false);
-  }, []);
+  }
 
-  const handleDelete = useCallback(
-    (note: Note) => {
-      Alert.alert('Delete note', 'Are you sure?', [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Delete',
-          style: 'destructive',
-          onPress: () => dispatch(deleteNote(note.id)),
-        },
-      ]);
-    },
-    [dispatch],
-  );
+  function handleDelete(note: Note) {
+    setNoteToDelete(note);
+  }
 
-  const handlePress = useCallback(
-    (note: Note) => {
-      navigation.navigate('NoteDetail', { noteId: note.id });
-    },
-    [navigation],
-  );
-
-  const renderItem = useCallback(
-    ({ item }: { item: Note }) => (
-      <NoteCard note={item} onPress={handlePress} onLongPress={handleDelete} />
-    ),
-    [handlePress, handleDelete],
-  );
-
-  const renderEmpty = useCallback(
-    () => (
-      <View className="flex-1 items-center justify-center px-8">
-        {/* <View className="h-12 w-12 items-center justify-center rounded-full bg-primaryLight mb-4">
-          <Text className="text-xl text-primary">+</Text>
-        </View> */}
-        <Text className="text-lg font-semibold text-text-primary">
-          No notes yet
-        </Text>
-        <Text className="mt-1 text-center text-sm text-text-secondary">
-          Tap the button below to create your first note
-        </Text>
-      </View>
-    ),
-    [],
-  );
+  function handlePress(note: Note) {
+    navigation.navigate('NoteDetail', { noteId: note.id });
+  }
 
   return (
     <KeyboardAvoidingView
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      behavior={KEYBOARD_BEHAVIOR}
       className="flex-1 bg-background"
       style={{ paddingTop: insets.top }}
     >
@@ -160,12 +140,12 @@ function NotesListScreen({ navigation }: Props) {
       >
         <Pressable className="flex-1 bg-black/40" onPress={handleCancel}>
           <KeyboardAvoidingView
-            behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+            behavior={KEYBOARD_BEHAVIOR}
             className="justify-end flex-1"
           >
             <Pressable
               className="rounded-t-2xl bg-surface px-5 pt-3 pb-6"
-              onPress={() => {}}
+              onPress={e => e.stopPropagation()}
             >
               <View className="mx-auto mb-4 h-1 w-8 rounded-full bg-border" />
               <Text className="mb-4 text-lg font-semibold text-text-primary">
@@ -217,8 +197,14 @@ function NotesListScreen({ navigation }: Props) {
       <FlatList
         data={notes}
         keyExtractor={item => item.id}
-        renderItem={renderItem}
-        ListEmptyComponent={renderEmpty}
+        renderItem={({ item }) => (
+          <NoteCard
+            note={item}
+            onPress={handlePress}
+            onLongPress={handleDelete}
+          />
+        )}
+        ListEmptyComponent={ListEmpty}
         contentContainerStyle={
           notes.length === 0
             ? { flex: 1 }
@@ -232,7 +218,6 @@ function NotesListScreen({ navigation }: Props) {
           style={{
             bottom: insets.bottom + 24,
             shadowColor: '#00994E',
-            shadowOffset: { width: 0, height: 4 },
             shadowOpacity: 0.35,
             shadowRadius: 10,
           }}
@@ -241,6 +226,20 @@ function NotesListScreen({ navigation }: Props) {
           <Text className="text-3xl leading-8 text-white">+</Text>
         </Pressable>
       )}
+
+      <ConfirmDialog
+        visible={noteToDelete !== null}
+        title="Delete note"
+        message="Are you sure?"
+        confirmLabel="Delete"
+        cancelLabel="Cancel"
+        destructive
+        onConfirm={() => {
+          if (noteToDelete) dispatch(deleteNote(noteToDelete.id));
+          setNoteToDelete(null);
+        }}
+        onCancel={() => setNoteToDelete(null)}
+      />
     </KeyboardAvoidingView>
   );
 }
