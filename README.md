@@ -33,3 +33,4 @@ For iOS: `cd ios && bundle exec pod install && cd ..` then `npm run ios`. Before
 - Map tiles load from CDN — requires internet, no offline fallback
 - `npm test` fails — Jest can't parse `global.css`; needs `moduleNameMapper` for `.css` files
 - Location timeout with GPS off — no user-facing feedback beyond console log
+- Initally wanted to use native maps, but appernetly there a mismatch with the new arch fabric, and I were short on time to investegate more in depth
